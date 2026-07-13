@@ -40,9 +40,27 @@ def run_inference(model_path, image_path):
         elif results[0].probs is not None:
             vector_data.extend(results[0].probs.data.cpu().numpy().tolist())
             
-        if len(vector_data) < 128:
-            vector_data.extend(np.random.uniform(-1, 1, 128 - len(vector_data)).tolist())
+        # =================================================================
+        # DETERMINISTIC FRACTAL PROJECTION (Replaced random noise)
+        # =================================================================
+        if len(vector_data) > 0 and len(vector_data) < 128:
+            base_data = np.array(vector_data)
+            base_len = len(base_data)
+            extended_vector = []
+            
+            for i in range(128):
+                val = base_data[i % base_len]
+                freq = base_data[(i + 1) % base_len] + 0.1 
+                
+                wave = np.sin(i * freq) * np.cos(i * val)
+                extended_vector.append(float(val + wave))
+                
+            vector_data = extended_vector
+        elif len(vector_data) == 0:
+            vector_data = np.zeros(128).tolist()
+            
         vector_data = vector_data[:128]
+        # =================================================================
         
         print("[CORE AI] -> DATA STREAM STARTING!")
         for i, val in enumerate(vector_data):
