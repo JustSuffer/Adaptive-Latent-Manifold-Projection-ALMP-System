@@ -23,7 +23,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// ZMQ Request soketi
 const cmdSock = new zmq.Request();
 cmdSock.connect("tcp://127.0.0.1:5556");
 
@@ -45,9 +44,6 @@ app.post(
         image_path: path.resolve(req.files.image[0].path),
       };
 
-      console.log(`[NODE] Sending command to Python...`);
-
-      // Python'a gönder ve cevabı bekle
       await cmdSock.send(JSON.stringify(payload));
       const [result] = await cmdSock.receive();
       const resultObj = JSON.parse(result.toString());
@@ -62,21 +58,21 @@ app.post(
 
 async function runZmqSubscriber() {
   const sock = new zmq.Subscriber();
-  // Bazı Docker ortamlarında tcp://127.0.0.1 yerine tcp://0.0.0.0 daha kararlıdır
   sock.connect("tcp://127.0.0.1:5555");
   sock.subscribe("ALMP_DATA");
 
-  console.log("[NODE] ZMQ Subscriber listening...");
+  console.log("[NODE] ZMQ Subscriber Started. Listening for data...");
 
-  for await (const [topic, message] of sock) {
-    const dataString = message.toString();
-    console.log("[NODE] Raw ZMQ data:", dataString); // Artık loglarda her şeyi göreceğiz
-
+  // HATA BURADAYDI: Sadece tek bir frame (msg) geliyor, onu yakalıyoruz
+  for await (const [msg] of sock) {
     try {
+      const dataString = msg.toString();
       const jsonStr = dataString.replace("ALMP_DATA ", "");
       const dataObj = JSON.parse(jsonStr);
+
       io.emit("latent_stream", dataObj);
     } catch (e) {
+      // Artık hataları gizlemiyoruz
       console.error("[NODE] ZMQ Parse Error:", e);
     }
   }

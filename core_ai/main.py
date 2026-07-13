@@ -1,5 +1,4 @@
 import os
-# Suppress YOLO configuration warning
 os.environ["YOLO_CONFIG_DIR"] = "/tmp/Ultralytics"
 
 import zmq
@@ -11,13 +10,9 @@ import numpy as np
 
 context = zmq.Context()
 
-# PUB socket for data streaming
-# Veri şelalesi için PUB soketi
 pub_sock = context.socket(zmq.PUB)
-# Bind yerine connect deneyelim, çünkü genelde Node.js bind eder
-pub_sock.connect("tcp://127.0.0.1:5555")
+pub_sock.bind("tcp://127.0.0.1:5555")
 
-# REP socket for receiving commands from Node.js
 cmd_sock = context.socket(zmq.REP)
 cmd_sock.bind("tcp://127.0.0.1:5556")
 
@@ -38,16 +33,13 @@ def run_inference(model_path, image_path):
         
         vector_data = []
         
-        # Scenario 1: Object Detection (Extract box coordinates)
         if results[0].boxes is not None and len(results[0].boxes) > 0:
             for box in results[0].boxes.data:
                 vector_data.extend(box.cpu().numpy().tolist())
                 
-        # Scenario 2: Classification (Extract class probabilities)
         elif results[0].probs is not None:
             vector_data.extend(results[0].probs.data.cpu().numpy().tolist())
             
-        # Padding to 128 dimensions for stability
         if len(vector_data) < 128:
             vector_data.extend(np.random.uniform(-1, 1, 128 - len(vector_data)).tolist())
         vector_data = vector_data[:128]
@@ -69,8 +61,5 @@ while True:
         m_path = request.get("model_path")
         i_path = request.get("image_path")
         
-        # Immediate acknowledgement to Node.js
         cmd_sock.send_string(json.dumps({"status": "python_started", "message": "YOLO inference initializing"}))
-        
-        # Run inference in a separate thread to avoid blocking ZMQ
         threading.Thread(target=run_inference, args=(m_path, i_path)).start()
