@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { UploadCloud, Cpu, ImageIcon, Loader2 } from "lucide-react";
 
-// Hedef sunucu doğrudan Hugging Face makinesi olarak ayarlandı
-const BACKEND_URL = "https://nagumo21-almp-core.hf.space";
+// Tamamen senin bilgisayarındaki çalışan yerel porta çekildi
+const BACKEND_URL = "http://localhost:7860";
 
 const UploadPanel: React.FC = () => {
   const [modelFile, setModelFile] = useState<File | null>(null);
@@ -40,18 +40,15 @@ const UploadPanel: React.FC = () => {
       const response = await fetch(`${BACKEND_URL}/api/upload`, {
         method: "POST",
         body: formData,
-        // mode: "cors" tarayıcı tarafından otomatik eklenir, boundary ayarı için headers boş bırakılır.
       });
 
-      if (!response.ok) {
-        throw new Error(`Upload failed with status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error("Upload failed");
 
       const result = await response.json();
-      console.log("[ALMP SYSTEM] Upload Success:", result);
+      console.log("Upload Success:", result);
       setUploadStatus("success");
     } catch (error) {
-      console.error("[ALMP SYSTEM] Upload Error:", error);
+      console.error("Upload Error:", error);
       setUploadStatus("error");
     } finally {
       setIsUploading(false);
@@ -73,7 +70,6 @@ const UploadPanel: React.FC = () => {
       </div>
 
       <div className="flex flex-col gap-3">
-        {/* Model Input */}
         <label className="flex flex-col gap-1 cursor-pointer group">
           <span className="text-[10px] text-slate-500 uppercase tracking-widest ml-1">
             Model Weights (.pt)
@@ -94,7 +90,6 @@ const UploadPanel: React.FC = () => {
           />
         </label>
 
-        {/* Image Input */}
         <label className="flex flex-col gap-1 cursor-pointer group">
           <span className="text-[10px] text-slate-500 uppercase tracking-widest ml-1">
             Inference Target (.jpg/.png)
@@ -116,7 +111,6 @@ const UploadPanel: React.FC = () => {
         </label>
       </div>
 
-      {/* Upload Button */}
       <button
         onClick={handleUpload}
         disabled={!modelFile || !imageFile || isUploading}
@@ -138,7 +132,6 @@ const UploadPanel: React.FC = () => {
         )}
       </button>
 
-      {/* Status Feedback */}
       {uploadStatus === "success" && (
         <div className="text-[10px] text-cyber-neon font-mono text-center animate-pulse-fast mt-1">
           Upload Successful. Awaiting Data Stream.

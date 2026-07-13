@@ -6,7 +6,7 @@ import DataTablePanel, { type DataRow } from "./components/DataTablePanel";
 import MetricsPanel from "./components/MetricsPanel";
 import UploadPanel from "./components/UploadPanel";
 
-const BACKEND_URL = "https://nagumo21-almp-core.hf.space";
+const BACKEND_URL = "http://localhost:7860";
 
 function App() {
   const [connected, setConnected] = useState(false);
@@ -17,27 +17,19 @@ function App() {
   const [activeNodesCount, setActiveNodesCount] = useState(0);
 
   useEffect(() => {
-    // 1. Zırhlı Socket Bağlantısı (Hugging Face Proxy'lerini aşmak için)
-    const socket: Socket = io(BACKEND_URL, {
-      transports: ["websocket"], // Sadece saf WebSocket kullan, bağlantı kopmasını engeller
-      secure: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
+    // Yerel makineye doğrudan, engelsiz bağlantı kuruluyor
+    const socket: Socket = io(BACKEND_URL);
 
     socket.on("connect", () => {
-      console.log("[ALMP SYSTEM] Connected to ALMP Core AI");
+      console.log("Connected to ALMP Core AI");
       setConnected(true);
     });
 
-    socket.on("disconnect", (reason) => {
-      console.warn(
-        `[ALMP SYSTEM] Disconnected from ALMP Core AI. Reason: ${reason}`,
-      );
+    socket.on("disconnect", () => {
+      console.log("Disconnected from ALMP Core AI");
       setConnected(false);
     });
 
-    // 2. Canlı Veri Akışını Dinle
     socket.on(
       "latent_stream",
       (dataObj: {
@@ -45,12 +37,10 @@ function App() {
         latent_vector: number[];
         node_index: number;
       }) => {
-        // Çekirdek Metrikleri Güncelle
         setMotionScore(dataObj.motion_score);
         setLatentVector(dataObj.latent_vector);
         setActiveNodesCount(dataObj.node_index);
 
-        // Veri Tablosunu Güncelle
         setRecentData((prev) => {
           const newRow: DataRow = {
             id: `VAR-${dataObj.node_index.toString().padStart(4, "0")}`,
@@ -58,10 +48,9 @@ function App() {
             timestamp: new Date().toLocaleTimeString(),
             status: dataObj.motion_score > 0.5 ? "critical" : "stable",
           };
-          return [newRow, ...prev].slice(0, 10); // Sadece son 10 satırı tut
+          return [newRow, ...prev].slice(0, 10);
         });
 
-        // Görsel estetik için sahte bir gecikme (ping) değeri
         setLatency(Math.floor(Math.random() * 20) + 12);
       },
     );
@@ -73,10 +62,8 @@ function App() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-cyber-black text-slate-200 font-sans selection:bg-cyber-neon/30">
-      {/* 3B Arka Plan - Veriyi buraya gönderiyoruz ve o efsane morphing efekti başlıyor! */}
       <Canvas3D motionScore={motionScore} latentVector={latentVector} />
 
-      {/* Arayüz (UI Overlay) */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="pointer-events-auto">
           <HeaderPanel connected={connected} />
