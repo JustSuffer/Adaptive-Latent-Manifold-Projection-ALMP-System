@@ -12,8 +12,10 @@ import numpy as np
 context = zmq.Context()
 
 # PUB socket for data streaming
+# Veri şelalesi için PUB soketi
 pub_sock = context.socket(zmq.PUB)
-pub_sock.bind("tcp://127.0.0.1:5555")
+# Bind yerine connect deneyelim, çünkü genelde Node.js bind eder
+pub_sock.connect("tcp://127.0.0.1:5555")
 
 # REP socket for receiving commands from Node.js
 cmd_sock = context.socket(zmq.REP)

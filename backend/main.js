@@ -62,18 +62,22 @@ app.post(
 
 async function runZmqSubscriber() {
   const sock = new zmq.Subscriber();
+  // Bazı Docker ortamlarında tcp://127.0.0.1 yerine tcp://0.0.0.0 daha kararlıdır
   sock.connect("tcp://127.0.0.1:5555");
   sock.subscribe("ALMP_DATA");
 
-  console.log("ZMQ Subscriber Started.");
+  console.log("[NODE] ZMQ Subscriber listening...");
 
   for await (const [topic, message] of sock) {
+    const dataString = message.toString();
+    console.log("[NODE] Raw ZMQ data:", dataString); // Artık loglarda her şeyi göreceğiz
+
     try {
-      const jsonStr = message.toString().replace("ALMP_DATA ", "");
+      const jsonStr = dataString.replace("ALMP_DATA ", "");
       const dataObj = JSON.parse(jsonStr);
       io.emit("latent_stream", dataObj);
     } catch (e) {
-      // Hataları sessizce geç
+      console.error("[NODE] ZMQ Parse Error:", e);
     }
   }
 }
