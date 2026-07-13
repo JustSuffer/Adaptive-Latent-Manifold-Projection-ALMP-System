@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cyber-black: #02040a;
+  --color-cyber-dark: #0a0f1c;
+  --color-cyber-neon: #00f0ff;
+  --color-cyber-magenta: #ff0055;
+  --color-cyber-blue: #3b82f6;
+  --color-cyber-gold: #fbbf24;
+
+  --animate-pulse-fast: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-glow: glow 2s ease-in-out infinite alternate;
+}
+
+@layer base {
+  body {
+    @apply bg-cyber-black text-slate-200 overflow-hidden m-0 p-0 font-sans selection:bg-cyber-neon/30;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-cyber-dark/40 backdrop-blur-xl border border-white/5 shadow-[0_4px_30px_rgba(0,0,0,0.5)];
+  }
+  
+  .glass-button {
+    @apply bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 transition-all duration-300;
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  }
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 5px rgba(0, 240, 255, 0.2);
+  }
+  to {
+    text-shadow: 0 0 15px rgba(0, 240, 255, 0.8), 0 0 25px rgba(0, 240, 255, 0.4);
+  }
+}

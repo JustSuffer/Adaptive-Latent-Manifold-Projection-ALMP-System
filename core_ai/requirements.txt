@@ -1,0 +1,4 @@
+pyzmq
+torch
+numpy
+ultralytics
