@@ -6,7 +6,7 @@ import DataTablePanel, { type DataRow } from "./components/DataTablePanel";
 import MetricsPanel from "./components/MetricsPanel";
 import UploadPanel from "./components/UploadPanel";
 
-const BACKEND_URL = "http://localhost:7860";
+const BACKEND_URL = "https://nagumo21-almp-core.hf.space";
 
 function App() {
   const [connected, setConnected] = useState(false);

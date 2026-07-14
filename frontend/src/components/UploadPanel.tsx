@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { UploadCloud, Cpu, ImageIcon, Loader2 } from "lucide-react";
 
 // Tamamen senin bilgisayarındaki çalışan yerel porta çekildi
-const BACKEND_URL = "http://localhost:7860";
+const BACKEND_URL = "https://nagumo21-almp-core.hf.space";
 
 const UploadPanel: React.FC = () => {
   const [modelFile, setModelFile] = useState<File | null>(null);
