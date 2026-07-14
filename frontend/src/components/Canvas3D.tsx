@@ -23,7 +23,7 @@ const Canvas3D: React.FC<Canvas3DProps> = ({ motionScore, latentVector }) => {
 
         {/* Post Processing for the ultimate glow */}
         <EffectComposer>
-          <Bloom luminanceThreshold={0.2} mipmapBlur luminanceSmoothing={0.9} intensity={2.5} />
+          <Bloom luminanceThreshold={0.1} mipmapBlur luminanceSmoothing={0.9} intensity={3.0} />
         </EffectComposer>
 
         {/* User controls */}
