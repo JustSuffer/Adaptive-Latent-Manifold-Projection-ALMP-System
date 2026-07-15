@@ -16,7 +16,7 @@ const MetricsPanel: React.FC<MetricsPanelProps> = ({ latency, motionScore, activ
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-      className="absolute top-6 right-6 w-80 glass-panel rounded-2xl p-6 z-10 flex flex-col gap-6"
+      className="hidden md:flex absolute top-6 right-6 w-80 glass-panel rounded-2xl p-6 z-10 flex-col gap-6"
     >
       <div>
         <h3 className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mb-4">

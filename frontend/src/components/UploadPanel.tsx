@@ -60,7 +60,7 @@ const UploadPanel: React.FC = () => {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
-      className="absolute bottom-6 right-6 w-80 glass-panel rounded-2xl p-6 z-10 flex flex-col gap-4"
+      className="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-auto md:right-6 md:w-80 glass-panel rounded-2xl p-4 md:p-6 z-10 flex flex-col gap-4"
     >
       <div className="flex items-center gap-2 mb-2">
         <UploadCloud size={16} className="text-slate-400" />

@@ -285,16 +285,20 @@ const NeuralEngine = ({ nodesData, connections, motionScore, parentGroupRef }: a
             
             const targetCurve = curvesCache.current[photon.curveIdx];
             if (targetCurve) {
-               targetCurve.getPointAt(photon.progress, pos);
-               dummy.position.copy(pos);
-               
-               // Microscopic photon scale (0.015 - 0.02)
-               dummy.scale.setScalar(0.015 + Math.sin(photon.progress * Math.PI) * 0.01);
-               dummy.updateMatrix();
-               
-               if (photonsRef.current) {
-                  photonsRef.current.setMatrixAt(i, dummy.matrix);
-                  photonsRef.current.setColorAt(i, photon.color);
+               try {
+                  targetCurve.getPointAt(photon.progress, pos);
+                  dummy.position.copy(pos);
+                  
+                  // Microscopic photon scale (0.015 - 0.02)
+                  dummy.scale.setScalar(0.015 + Math.sin(photon.progress * Math.PI) * 0.01);
+                  dummy.updateMatrix();
+                  
+                  if (photonsRef.current) {
+                     photonsRef.current.setMatrixAt(i, dummy.matrix);
+                     photonsRef.current.setColorAt(i, photon.color);
+                  }
+               } catch (e) {
+                  // Ignore photon evaluation error for degenerate curves
                }
             }
          });

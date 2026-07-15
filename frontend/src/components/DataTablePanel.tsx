@@ -18,7 +18,7 @@ const DataTablePanel: React.FC<DataTablePanelProps> = ({ data }) => {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-      className="absolute bottom-6 left-6 w-[450px] glass-panel rounded-2xl overflow-hidden z-10"
+      className="hidden lg:block absolute bottom-6 left-6 w-[450px] glass-panel rounded-2xl overflow-hidden z-10"
     >
       <div className="px-6 py-4 border-b border-white/5 bg-white/5 backdrop-blur-md">
         <h3 className="text-xs text-slate-300 uppercase tracking-[0.2em] font-semibold">
