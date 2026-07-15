@@ -2,3 +2,4 @@ pyzmq
 torch
 numpy
 ultralytics
+onnx

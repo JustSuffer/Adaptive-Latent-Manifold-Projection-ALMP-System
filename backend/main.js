@@ -56,6 +56,35 @@ app.post(
   },
 );
 
+// New endpoint for Diagnostics Module
+app.post(
+  "/api/diagnostics/upload",
+  upload.single("model"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Missing model file" });
+      }
+
+      const payload = {
+        command: "PARSE_MODEL",
+        model_path: path.resolve(req.file.path),
+      };
+
+      console.log(`[NODE] Sending PARSE_MODEL for ${payload.model_path}`);
+      await cmdSock.send(JSON.stringify(payload));
+      
+      const [result] = await cmdSock.receive();
+      const resultObj = JSON.parse(result.toString());
+
+      res.json(resultObj);
+    } catch (error) {
+      console.error("[NODE CRITICAL ERROR]:", error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
 async function runZmqSubscriber() {
   const sock = new zmq.Subscriber();
   sock.connect("tcp://127.0.0.1:5555");

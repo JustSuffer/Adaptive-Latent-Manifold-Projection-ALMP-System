@@ -7,6 +7,7 @@ import time
 import threading
 from ultralytics import YOLO
 import numpy as np
+import onnx
 
 context = zmq.Context()
 
@@ -72,12 +73,85 @@ def run_inference(model_path, image_path):
     except Exception as e:
         print(f"[CORE AI ERROR] Inference failure: {e}")
 
+def parse_model_blueprint(model_path):
+    print(f"\n[CORE AI] -> Diagnostics requested for: {model_path}")
+    try:
+        # Step 1: Export to ONNX if it's a PT file
+        target_path = model_path
+        if model_path.endswith(".pt"):
+            print("[CORE AI] -> Translating .pt to .onnx...")
+            model = YOLO(model_path)
+            # Ultralytics native export
+            export_result = model.export(format="onnx", simplify=True)
+            # export_result typically returns the path to the exported onnx file
+            target_path = export_result if isinstance(export_result, str) else model_path.replace('.pt', '.onnx')
+            
+        print(f"[CORE AI] -> Parsing ONNX Blueprint: {target_path}")
+        onnx_model = onnx.load(target_path)
+        
+        # Step 2: Extract Architecture
+        blueprint = []
+        for i, node in enumerate(onnx_model.graph.node):
+            # We don't want to overwhelm with 1000s of layers, limit to 200 for UI safety or just parse them all
+            # For diagnostics, we capture type and basic params
+            params = {}
+            for attr in node.attribute:
+                if attr.type == 1: # FLOAT
+                    params[attr.name] = round(attr.f, 4)
+                elif attr.type == 2: # INT
+                    params[attr.name] = attr.i
+                elif attr.type == 3: # STRING
+                    params[attr.name] = attr.s.decode('utf-8')
+                elif attr.type == 7: # INTS
+                    params[attr.name] = list(attr.ints)
+                elif attr.type == 6: # FLOATS
+                    params[attr.name] = [round(x, 4) for x in attr.floats]
+            
+            # Extract weights if available (this is complex in ONNX without mapping initializers, 
+            # but we can do a simplified mock for weight shapes based on initializers if needed, 
+            # or just skip weights if too complex and rely on params).
+            # Let's extract weight shapes by matching node inputs with graph initializers
+            weights_info = None
+            for input_name in node.input:
+                for init in onnx_model.graph.initializer:
+                    if init.name == input_name:
+                        shape = list(init.dims)
+                        total = np.prod(shape) if len(shape) > 0 else 0
+                        # Usually the first initializer is the main weight matrix
+                        if not weights_info and total > 0:
+                            weights_info = {"shape": shape, "total": int(total)}
+
+            blueprint.append({
+                "name": f"Layer {i}: {node.op_type}",
+                "type": node.op_type,
+                "params": params,
+                "weights": weights_info
+            })
+            
+            # Hard limit for UI performance just in case of massive models (e.g. YOLOv8 has ~400 nodes)
+            if i > 500:
+                break
+                
+        print(f"[CORE AI] -> Successfully parsed {len(blueprint)} layers.")
+        return {"status": "success", "blueprint": blueprint}
+    except Exception as e:
+        print(f"[CORE AI ERROR] Model Parsing failed: {e}")
+        return {"status": "error", "error": str(e)}
+
 while True:
     message = cmd_sock.recv_string()
     request = json.loads(message)
-    if request.get("command") == "PROCESS_INFERENCE":
+    cmd = request.get("command")
+    
+    if cmd == "PROCESS_INFERENCE":
         m_path = request.get("model_path")
         i_path = request.get("image_path")
         
         cmd_sock.send_string(json.dumps({"status": "python_started", "message": "YOLO inference initializing"}))
         threading.Thread(target=run_inference, args=(m_path, i_path)).start()
+        
+    elif cmd == "PARSE_MODEL":
+        m_path = request.get("model_path")
+        # Run parsing synchronously and return the result
+        result = parse_model_blueprint(m_path)
+        cmd_sock.send_string(json.dumps(result))
