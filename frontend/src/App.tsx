@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
+import { Routes, Route } from "react-router-dom";
 import Canvas3D from "./components/Canvas3D";
 import HeaderPanel from "./components/HeaderPanel";
 import DataTablePanel, { type DataRow } from "./components/DataTablePanel";
 import MetricsPanel from "./components/MetricsPanel";
 import UploadPanel from "./components/UploadPanel";
+import HubMenu from "./components/HubMenu";
+import DiagnosticsPanel from "./components/DiagnosticsPanel";
 
 const BACKEND_URL = "https://nagumo21-almp-core.hf.space";
 
@@ -92,21 +95,29 @@ function App() {
     <div className="relative w-screen h-screen overflow-hidden bg-cyber-black text-slate-200 font-sans selection:bg-cyber-neon/30">
       <Canvas3D motionScore={motionScore} latentVector={latentVector} />
 
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="pointer-events-auto">
-          <HeaderPanel connected={connected} />
+      <Routes>
+        <Route path="/" element={<HubMenu />} />
+        
+        <Route path="/projection" element={
+          <div className="absolute inset-0 pointer-events-none z-10">
+            <div className="pointer-events-auto">
+              <HeaderPanel connected={connected} />
 
-          <MetricsPanel
-            latency={latency}
-            motionScore={motionScore}
-            activeNodes={activeNodesCount}
-          />
+              <MetricsPanel
+                latency={latency}
+                motionScore={motionScore}
+                activeNodes={activeNodesCount}
+              />
 
-          <DataTablePanel data={recentData} onExport={handleExportLog} />
+              <DataTablePanel data={recentData} onExport={handleExportLog} />
 
-          <UploadPanel />
-        </div>
-      </div>
+              <UploadPanel />
+            </div>
+          </div>
+        } />
+
+        <Route path="/diagnostics" element={<DiagnosticsPanel />} />
+      </Routes>
     </div>
   );
 }

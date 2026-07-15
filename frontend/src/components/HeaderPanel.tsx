@@ -1,12 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Network } from 'lucide-react';
+import { Network, ChevronLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface HeaderPanelProps {
   connected: boolean;
 }
 
 const HeaderPanel: React.FC<HeaderPanelProps> = ({ connected }) => {
+  const navigate = useNavigate();
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: -20 }}
@@ -44,6 +47,12 @@ const HeaderPanel: React.FC<HeaderPanelProps> = ({ connected }) => {
       </div>
       
       <div className="mt-6 pt-4 border-t border-white/5 flex gap-4">
+        <button 
+          onClick={() => navigate('/')}
+          className="glass-button text-xs font-mono uppercase tracking-widest px-4 py-2 rounded text-slate-400 hover:text-white flex items-center gap-2"
+        >
+          <ChevronLeft size={14} /> Hub
+        </button>
         <button className="glass-button text-xs font-mono uppercase tracking-widest px-4 py-2 rounded text-slate-300">
           Target Cluster
         </button>
