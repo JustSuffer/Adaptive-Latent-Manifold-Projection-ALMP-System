@@ -119,30 +119,59 @@ const DiagnosticsPanel: React.FC = () => {
   const [loadingText, setLoadingText] = useState("Initializing ONNX Protocol...");
   const [isDragging, setIsDragging] = useState(false);
 
-  // Mock YOLO Blueprint JSON for UI perfection
-  const mockBlueprint = [
-    { name: "Input Layer", type: "Conv2d", params: { in_channels: 3, out_channels: 32, kernel_size: 3, stride: 1 }, weights: { shape: [32, 3, 3, 3], total: 864 } },
-    { name: "Stabilizer", type: "BatchNorm2d", params: { num_features: 32, eps: "1e-05", momentum: 0.1 } },
-    { name: "Activation Core", type: "SiLU", params: { inplace: true } },
-    { name: "Feature Extractor 1", type: "Conv2d", params: { in_channels: 32, out_channels: 64, kernel_size: 3, stride: 2 }, weights: { shape: [64, 32, 3, 3], total: 18432 } },
-    { name: "Stabilizer", type: "BatchNorm2d", params: { num_features: 64, eps: "1e-05", momentum: 0.1 } },
-    { name: "Bottleneck Process", type: "Conv2d", params: { in_channels: 64, out_channels: 64, kernel_size: 1, stride: 1 }, weights: { shape: [64, 64, 1, 1], total: 4096 } },
-    { name: "Activation Core", type: "SiLU", params: { inplace: true } },
-    { name: "Detection Head", type: "Linear", params: { in_features: 64, out_features: 10, bias: true }, weights: { shape: [10, 64], total: 640 } },
-  ];
+  // Mock data removed, using real ONNX parser data
 
-  const triggerUpload = () => {
+  const [diagnosticData, setDiagnosticData] = useState<any[]>([]);
+
+  const triggerUpload = async (file?: File) => {
+    if (!file) return;
+
     setDiagnosticState(1);
-    setTimeout(() => setLoadingText("Extracting Tensors..."), 600);
-    setTimeout(() => setLoadingText("Translating to ONNX Blueprint..."), 1500);
-    setTimeout(() => setLoadingText("Parsing Neural Architecture..."), 2400);
-    setTimeout(() => setDiagnosticState(2), 3500);
+    setLoadingText("Uploading Matrix...");
+
+    const formData = new FormData();
+    formData.append("model", file);
+
+    try {
+      setLoadingText("Extracting Tensors & Translating to ONNX Blueprint...");
+      const response = await fetch("https://nagumo21-almp-core.hf.space/api/diagnostics/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Backend connection failed");
+      }
+
+      setLoadingText("Parsing Neural Architecture...");
+      const result = await response.json();
+
+      if (result.status === "success" && result.blueprint) {
+        setDiagnosticData(result.blueprint);
+      } else {
+        throw new Error(result.error || "Unknown parsing error");
+      }
+
+      setDiagnosticState(2);
+    } catch (err) {
+      console.error(err);
+      alert("Diagnostic Failed: " + (err as Error).message);
+      setDiagnosticState(0);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    triggerUpload();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      triggerUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      triggerUpload(e.target.files[0]);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -193,7 +222,7 @@ const DiagnosticsPanel: React.FC = () => {
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
-              onClick={triggerUpload}
+              onClick={() => document.getElementById("diagnostic-file-input")?.click()}
               className={`w-[600px] h-[300px] border-2 border-dashed rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all duration-500 bg-black/40 backdrop-blur-xl
                 ${isDragging ? 'border-cyber-neon bg-cyber-neon/10' : 'border-slate-700 hover:border-cyber-neon/50 hover:bg-white/5'}
               `}
@@ -203,6 +232,14 @@ const DiagnosticsPanel: React.FC = () => {
               </div>
               <h3 className="text-lg text-slate-200 font-mono tracking-widest uppercase mb-2">Drop Architecture File</h3>
               <p className="text-xs text-slate-500 font-mono">or click to browse local matrix</p>
+              
+              <input 
+                id="diagnostic-file-input"
+                type="file" 
+                className="hidden"
+                accept=".pt,.onnx,.h5"
+                onChange={handleFileInput}
+              />
             </div>
           </motion.div>
         )}
@@ -261,15 +298,15 @@ const DiagnosticsPanel: React.FC = () => {
                 Neural Blueprint
               </h2>
               <div className="flex items-center gap-4 text-[10px] font-mono text-slate-500 uppercase tracking-widest">
-                <span>Model: <span className="text-slate-300">best.onnx</span></span>
+                <span>Model: <span className="text-slate-300">Uploaded Matrix</span></span>
                 <span>•</span>
-                <span>Layers: <span className="text-slate-300">{mockBlueprint.length}</span></span>
+                <span>Layers: <span className="text-slate-300">{diagnosticData.length}</span></span>
               </div>
             </div>
 
             {/* Sidebar Content (Scrollable) */}
             <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
-              {mockBlueprint.map((layer, idx) => (
+              {diagnosticData.map((layer, idx) => (
                 <AccordionLayer key={idx} layer={layer} index={idx} />
               ))}
               
