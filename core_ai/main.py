@@ -34,11 +34,33 @@ def run_inference(model_path, image_path):
         
         vector_data = []
         
-        if results[0].boxes is not None and len(results[0].boxes) > 0:
+        if hasattr(results[0], 'boxes') and results[0].boxes is not None and len(results[0].boxes) > 0:
+            # DYNAMIC PAYLOAD NORMALIZATION
+            # Convert raw pixel coordinates into a synthetic [-0.5, 0.5] latent space
+            h, w = results[0].orig_shape if hasattr(results[0], 'orig_shape') else (640, 640)
+            
             for box in results[0].boxes.data:
-                vector_data.extend(box.cpu().numpy().tolist())
+                box_data = box.cpu().numpy()
+                # Format: [x1, y1, x2, y2, conf, cls]
+                if len(box_data) >= 6:
+                    x1, y1, x2, y2, conf, cls = box_data[:6]
+                    
+                    # Normalize to [0, 1] then shift to [-0.5, 0.5] for 3D center alignment
+                    nx1, nx2 = x1 / w, x2 / w
+                    ny1, ny2 = y1 / h, y2 / h
+                    
+                    cx = (nx1 + nx2) / 2.0 - 0.5
+                    cy = (ny1 + ny2) / 2.0 - 0.5
+                    
+                    area = (nx2 - nx1) * (ny2 - ny1)
+                    
+                    # Construct normalized synthetic latent array for 3D Engine
+                    vector_data.extend([float(cx), float(cy), float(area), float(conf), float(cls / 80.0)])
+                else:
+                    # Fallback for weird shapes
+                    vector_data.extend((box_data / w).tolist())
                 
-        elif results[0].probs is not None:
+        elif hasattr(results[0], 'probs') and results[0].probs is not None:
             vector_data.extend(results[0].probs.data.cpu().numpy().tolist())
             
         # =================================================================
