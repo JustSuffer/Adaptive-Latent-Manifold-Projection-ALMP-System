@@ -10,9 +10,10 @@ export interface DataRow {
 
 interface DataTablePanelProps {
   data: DataRow[];
+  onExport?: () => void;
 }
 
-const DataTablePanel: React.FC<DataTablePanelProps> = ({ data }) => {
+const DataTablePanel: React.FC<DataTablePanelProps> = ({ data, onExport }) => {
   return (
     <motion.div 
       initial={{ opacity: 0, x: -20 }}
@@ -65,7 +66,10 @@ const DataTablePanel: React.FC<DataTablePanelProps> = ({ data }) => {
       
       <div className="px-6 py-3 border-t border-white/5 flex justify-between items-center bg-black/20">
         <span className="text-[10px] text-slate-500 font-mono">Updating continuously via WSS</span>
-        <button className="text-[10px] text-cyber-magenta hover:text-white transition-colors uppercase tracking-widest font-mono">
+        <button 
+          onClick={onExport}
+          className="text-[10px] text-cyber-magenta hover:text-white transition-colors uppercase tracking-widest font-mono"
+        >
           Export Log
         </button>
       </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import Canvas3D from "./components/Canvas3D";
 import HeaderPanel from "./components/HeaderPanel";
@@ -14,6 +14,7 @@ function App() {
   const [motionScore, setMotionScore] = useState(0.0);
   const [latentVector, setLatentVector] = useState<number[]>([]);
   const [recentData, setRecentData] = useState<DataRow[]>([]);
+  const fullDataLog = useRef<DataRow[]>([]);
   const [activeNodesCount, setActiveNodesCount] = useState(0);
 
   useEffect(() => {
@@ -48,6 +49,7 @@ function App() {
             timestamp: new Date().toLocaleTimeString(),
             status: dataObj.motion_score > 0.5 ? "critical" : "stable",
           };
+          fullDataLog.current.push(newRow);
           return [newRow, ...prev].slice(0, 10);
         });
 
@@ -59,6 +61,32 @@ function App() {
       socket.disconnect();
     };
   }, []);
+
+  const handleExportLog = () => {
+    if (fullDataLog.current.length === 0) {
+      console.warn("Dışa aktarılacak veri yok!");
+      return;
+    }
+
+    const exportPayload = {
+      exportDate: new Date().toISOString(),
+      modelUsed: "best.pt",
+      totalNodes: fullDataLog.current.length,
+      data: fullDataLog.current
+    };
+
+    const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `ALMP_Fingerprint_${new Date().getTime()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-cyber-black text-slate-200 font-sans selection:bg-cyber-neon/30">
@@ -74,7 +102,7 @@ function App() {
             activeNodes={activeNodesCount}
           />
 
-          <DataTablePanel data={recentData} />
+          <DataTablePanel data={recentData} onExport={handleExportLog} />
 
           <UploadPanel />
         </div>
