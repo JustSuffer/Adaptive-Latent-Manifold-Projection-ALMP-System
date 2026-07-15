@@ -53,11 +53,13 @@ const ParticleNetwork: React.FC<ParticleNetworkProps> = ({ motionScore, latentVe
           const valY = latentVector[(i * 3 + 1) % latentVector.length];
           const valZ = latentVector[(i * 3 + 2) % latentVector.length];
           
-          node.targetPos.set(
-            node.basePos.x + valX * 10.0,
-            node.basePos.y + valY * 10.0,
-            node.basePos.z + valZ * 10.0
-          );
+          if (!isNaN(valX) && !isNaN(valY) && !isNaN(valZ)) {
+             node.targetPos.set(
+               node.basePos.x + valX * 10.0,
+               node.basePos.y + valY * 10.0,
+               node.basePos.z + valZ * 10.0
+             );
+          }
        } else {
           node.targetPos.copy(node.basePos);
        }
@@ -227,13 +229,32 @@ const NeuralEngine = ({ nodesData, connections, motionScore, parentGroupRef }: a
                const pB_off = pB.clone().add(bundleOffset.clone().multiplyScalar(0.05));
                const bend_off = bend.clone().add(bundleOffset.clone().multiplyScalar(1.0));
                
-               const curve = new THREE.CatmullRomCurve3([pA_off, bend_off, pB_off]);
-               curvesCache.current.push(curve);
-               const points = curve.getPoints(SEGMENTS); 
+               const rawPoints = [pA_off, bend_off, pB_off];
+               const validPoints = [rawPoints[0]];
+               
+               for (let p = 1; p < rawPoints.length; p++) {
+                  if (rawPoints[p].distanceTo(validPoints[validPoints.length - 1]) > 0.01) {
+                     validPoints.push(rawPoints[p]);
+                  }
+               }
+               
+               if (validPoints.length < 2) {
+                   for (let k = 0; k < SEGMENTS * 2 * 3; k++) linePositions[offset++] = 0;
+                   continue;
+               }
+               
+               try {
+                   const curve = new THREE.CatmullRomCurve3(validPoints);
+                   curvesCache.current.push(curve);
+                   const points = curve.getPoints(SEGMENTS); 
 
-               for (let k = 0; k < SEGMENTS; k++) {
-                  linePositions[offset++] = points[k].x; linePositions[offset++] = points[k].y; linePositions[offset++] = points[k].z;
-                  linePositions[offset++] = points[k+1].x; linePositions[offset++] = points[k+1].y; linePositions[offset++] = points[k+1].z;
+                   for (let k = 0; k < SEGMENTS; k++) {
+                      linePositions[offset++] = points[k].x; linePositions[offset++] = points[k].y; linePositions[offset++] = points[k].z;
+                      linePositions[offset++] = points[k+1].x; linePositions[offset++] = points[k+1].y; linePositions[offset++] = points[k+1].z;
+                   }
+               } catch (e) {
+                   // Graceful Degradation: Silently discard this strand
+                   for (let k = 0; k < SEGMENTS * 2 * 3; k++) linePositions[offset++] = 0;
                }
             }
          });
@@ -255,7 +276,11 @@ const NeuralEngine = ({ nodesData, connections, motionScore, parentGroupRef }: a
             
             if (photon.progress > 1.0) {
                photon.progress = 0.0;
-               photon.curveIdx = Math.floor(Math.random() * curvesCache.current.length);
+               if (curvesCache.current.length > 0) {
+                   photon.curveIdx = Math.floor(Math.random() * curvesCache.current.length);
+               } else {
+                   photon.curveIdx = 0;
+               }
             }
             
             const targetCurve = curvesCache.current[photon.curveIdx];
