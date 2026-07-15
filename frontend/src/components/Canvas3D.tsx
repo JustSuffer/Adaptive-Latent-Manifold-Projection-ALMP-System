@@ -1,7 +1,7 @@
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
-import { EffectComposer, Bloom, DepthOfField } from '@react-three/postprocessing';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import ParticleNetwork from './ParticleNetwork';
 
 interface Canvas3DProps {
@@ -13,7 +13,7 @@ const Canvas3D: React.FC<Canvas3DProps> = ({ motionScore, latentVector }) => {
   return (
     <div className="absolute inset-0 w-full h-full bg-cyber-black">
       <Canvas camera={{ position: [0, 8, 25], fov: 60 }}>
-        <color attach="background" args={['#010205']} />
+        <color attach="background" args={['#000103']} />
         
         {/* Deep space stars effect - reduced density for focus on neurons */}
         <Stars radius={100} depth={50} count={3000} factor={4} saturation={1} fade speed={1.0} />
@@ -21,10 +21,10 @@ const Canvas3D: React.FC<Canvas3DProps> = ({ motionScore, latentVector }) => {
         {/* The Manifold (Galaxy) */}
         <ParticleNetwork motionScore={motionScore} latentVector={latentVector} />
 
-        {/* Post Processing for the cinematic macro glow */}
+        {/* Post Processing for razor-sharp cinematic glow */}
         <EffectComposer>
-          <DepthOfField focusDistance={0.01} focalLength={0.02} bokehScale={3} height={480} />
-          <Bloom luminanceThreshold={0.2} mipmapBlur luminanceSmoothing={0.9} intensity={2.5} />
+          {/* Depth of field removed for macro sharpness */}
+          <Bloom luminanceThreshold={0.5} mipmapBlur luminanceSmoothing={0.5} intensity={1.8} />
         </EffectComposer>
 
         {/* User controls */}
