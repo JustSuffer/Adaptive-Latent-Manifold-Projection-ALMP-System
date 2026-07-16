@@ -15,7 +15,21 @@ const ParticleNetwork: React.FC<ParticleNetworkProps> = ({ motionScore, latentVe
   
   const NODE_COUNT = 40; 
 
-  // 1. Generate Cell Body Nodes (Somas)
+  // Infinite Dynamic Palette Generator (Hue derived from model's latent data)
+  const [themeHue, setThemeHue] = React.useState<number>(200); // Default to Cyan
+
+  useEffect(() => {
+    if (latentVector && latentVector.length > 0) {
+      // Deterministic hash based on the first vector value of the new model
+      const firstVal = Math.abs(latentVector[0]);
+      const newHue = Math.floor((firstVal * 10000) % 360);
+      if (Math.abs(newHue - themeHue) > 5) {
+        setThemeHue(newHue);
+      }
+    }
+  }, [latentVector ? latentVector[0] : null]);
+
+  // 1. Generate Cell Body Nodes (Somas) - Now strictly tied to Dynamic Theme
   const nodesData = useMemo(() => {
     const arr = [];
     for (let i = 0; i < NODE_COUNT; i++) {
@@ -27,7 +41,19 @@ const ParticleNetwork: React.FC<ParticleNetworkProps> = ({ motionScore, latentVe
       const y = radius * Math.sin(phi) * Math.sin(theta);
       const z = radius * Math.cos(phi);
       
-      const baseColor = new THREE.Color(CYBER_PALETTE[Math.floor(Math.random() * CYBER_PALETTE.length)]);
+      // Dynamic HSL Palette Generation (16.7 Million Colors)
+      // Mixes Analogous, Complementary, and Triadic colors based on the base themeHue
+      const colorType = Math.random();
+      let nodeHue = themeHue;
+      if (colorType > 0.8) nodeHue = (themeHue + 180) % 360; // Complementary
+      else if (colorType > 0.5) nodeHue = (themeHue + 30) % 360; // Analogous Right
+      else if (colorType > 0.3) nodeHue = (themeHue - 30 + 360) % 360; // Analogous Left
+      
+      // Variations in lightness (from dark neon to pure white-hot cores)
+      const saturation = 0.7 + Math.random() * 0.3;
+      const lightness = colorType > 0.9 ? 0.9 : 0.5 + Math.random() * 0.3;
+      
+      const baseColor = new THREE.Color().setHSL(nodeHue / 360, saturation, lightness);
       
       // Make some nodes exceptionally bright
       if (Math.random() > 0.8) baseColor.multiplyScalar(3.0); 
@@ -41,7 +67,7 @@ const ParticleNetwork: React.FC<ParticleNetworkProps> = ({ motionScore, latentVe
       });
     }
     return arr;
-  }, []);
+  }, [themeHue]); // Rebuild topology colors when theme changes
 
   // 2. React to Latent Data Stream (Massive Morphing)
   useEffect(() => {
@@ -102,6 +128,7 @@ const ParticleNetwork: React.FC<ParticleNetworkProps> = ({ motionScore, latentVe
           connections={connections} 
           motionScore={motionScore} 
           parentGroupRef={groupRef} 
+          themeHue={themeHue}
        />
      </group>
   );
@@ -110,7 +137,7 @@ const ParticleNetwork: React.FC<ParticleNetworkProps> = ({ motionScore, latentVe
 // ----------------------------------------------------------------------------------
 // NeuralEngine: Razor sharp nodes, microscopic fiber bundles, tiny photons
 // ----------------------------------------------------------------------------------
-const NeuralEngine = ({ nodesData, connections, motionScore, parentGroupRef }: any) => {
+const NeuralEngine = ({ nodesData, connections, motionScore, parentGroupRef, themeHue }: any) => {
    const coreMeshRef = useRef<THREE.InstancedMesh>(null);
    const linesRef = useRef<THREE.LineSegments>(null);
    const photonsRef = useRef<THREE.InstancedMesh>(null);
@@ -131,15 +158,23 @@ const NeuralEngine = ({ nodesData, connections, motionScore, parentGroupRef }: a
    const photonsData = useMemo(() => {
      const arr = [];
      for(let i=0; i < PHOTON_COUNT; i++) {
+        // Photons follow the same dynamic HSL rules
+        const colorType = Math.random();
+        let pTone = themeHue;
+        if (colorType > 0.8) pTone = (themeHue + 180) % 360; 
+        else if (colorType > 0.5) pTone = (themeHue + 30) % 360; 
+        
+        const pColor = new THREE.Color().setHSL(pTone / 360, 0.9, 0.6).multiplyScalar(8.0); // Extremely bright
+
         arr.push({
            curveIdx: Math.floor(Math.random() * totalCurves),
            progress: Math.random(),
            speed: 0.1 + Math.random() * 0.4,
-           color: new THREE.Color(CYBER_PALETTE[Math.floor(Math.random() * CYBER_PALETTE.length)]).multiplyScalar(8.0) // Very bright
+           color: pColor
         });
      }
      return arr;
-   }, [totalCurves]);
+   }, [totalCurves, themeHue]);
 
    useEffect(() => {
      let offset = 0;

@@ -8,6 +8,7 @@ import MetricsPanel from "./components/MetricsPanel";
 import UploadPanel from "./components/UploadPanel";
 import HubMenu from "./components/HubMenu";
 import DiagnosticsPanel from "./components/DiagnosticsPanel";
+import { Github, Home } from "lucide-react";
 
 const BACKEND_URL = "https://nagumo21-almp-core.hf.space";
 
@@ -93,6 +94,17 @@ function App() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-cyber-black text-slate-200 font-sans selection:bg-cyber-neon/30">
+      
+      {/* Global Top-Right Navigation Icons */}
+      <div className="absolute top-6 right-8 z-[100] flex items-center gap-6">
+        <a href="https://github.com/JustSuffer" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all duration-300 transform hover:scale-110">
+          <Github size={24} />
+        </a>
+        <a href="https://izzetportfolio.netlify.app/" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-cyber-neon hover:drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] transition-all duration-300 transform hover:scale-110">
+          <Home size={24} />
+        </a>
+      </div>
+
       <Canvas3D motionScore={motionScore} latentVector={latentVector} />
 
       <Routes>
