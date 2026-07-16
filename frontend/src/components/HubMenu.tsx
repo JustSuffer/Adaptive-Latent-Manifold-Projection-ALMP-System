@@ -10,13 +10,13 @@ const HubMenu: React.FC = () => {
   return (
     <div className="absolute inset-0 pointer-events-auto flex items-center justify-center z-50 bg-cyber-black/40 backdrop-blur-sm overflow-hidden">
       
-      <div className="flex flex-col items-center gap-12 w-full max-w-5xl px-8 z-10 h-full overflow-y-auto py-12 custom-scrollbar">
+      <div className="flex flex-col items-center justify-center gap-12 w-full max-w-5xl px-8 z-10 h-full overflow-y-auto py-12 custom-scrollbar">
         
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.0 }}
-          className="text-center mt-12 shrink-0"
+          className="text-center shrink-0"
         >
           <h1 className="text-5xl font-bold tracking-[0.3em] text-slate-100 uppercase mb-4 shadow-cyber-neon drop-shadow-[0_0_15px_rgba(0,229,255,0.5)]">
             ALMP<span className="text-cyber-neon font-light">SYS</span>
@@ -26,7 +26,7 @@ const HubMenu: React.FC = () => {
           </p>
         </motion.div>
 
-        <div className="flex flex-col gap-8 w-full shrink-0 mb-20">
+        <div className="flex flex-col gap-8 w-full shrink-0">
           
           <div className="flex flex-col md:flex-row gap-8 w-full">
             {/* Module 1: Topological Projection */}
