@@ -7,8 +7,7 @@ interface ParticleNetworkProps {
   latentVector?: number[]; 
 }
 
-// Cinematic Bioluminescent Palette: Neon Blue, Deep Cyan, Glowing White/Gold
-const CYBER_PALETTE = ['#0055ff', '#00e5ff', '#ffffff', '#ffdd00'];
+// Cinematic Bioluminescent Palette is now dynamically generated via HSL rules
 
 const ParticleNetwork: React.FC<ParticleNetworkProps> = ({ motionScore, latentVector }) => {
   const groupRef = useRef<THREE.Group>(null);
